@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Funnel Intelligence — V0 Findings & Plan</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-snap-type: y mandatory; scroll-behavior: auto; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+    background: #F5F5F5; overflow-x: hidden;
+  }
+  .slide {
+    width: 100vw; height: 100vh; position: relative; scroll-snap-align: start;
+    display: flex; align-items: center; justify-content: center; padding: 80px; overflow: hidden;
+  }
+  .content { text-align: center; max-width: 1120px; width: 100%; position: relative; z-index: 2; }
+  .content-left { text-align: left; max-width: 1120px; width: 100%; position: relative; z-index: 2; }
+
+  /* logo + gradient bar + indicator */
+  .logo { position: absolute; top: 36px; left: 40px; width: 52px; height: 52px; z-index: 10; border-radius: 12px; }
+  .gradient-bar { position: absolute; bottom: 0; left: 0; width: 100%; height: 5px; z-index: 10;
+    background: linear-gradient(90deg,#A855F7,#3B82F6,#06B6D4,#10B981,#F59E0B,#EF4444,#EC4899); }
+  .gradient-bar.on-dark { background: rgba(255,255,255,0.3); }
+  #indicator { position: fixed; bottom: 22px; right: 28px; z-index: 50; font-size: 14px; font-weight: 500;
+    letter-spacing: 0.02em; color: #6B7280; transition: color .3s; }
+  #indicator.light { color: rgba(255,255,255,0.7); }
+
+  /* type scale */
+  .hero-text { font-size: clamp(56px,8vw,116px); font-weight: 900; letter-spacing: -0.04em; line-height: 1.0; }
+  .section-text { font-size: clamp(44px,6vw,78px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.05; }
+  .slide-title { font-size: clamp(30px,4vw,54px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.12; }
+  .body-text { font-size: clamp(18px,2vw,24px); font-weight: 400; line-height: 1.5; }
+  .label-text { font-size: clamp(13px,1.2vw,15px); font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em; }
+  .muted { color: #9CA3AF; } .muted-light { color: rgba(255,255,255,0.6); }
+  .stat-num { font-size: clamp(60px,9vw,120px); font-weight: 900; letter-spacing: -0.04em; line-height: 1; }
+
+  .gradient-text {
+    background: linear-gradient(90deg,#A855F7,#3B82F6,#06B6D4,#10B981,#F59E0B,#EF4444,#EC4899);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+
+  .dark { background: #111111; color: #fff; }
+  .dark-grad { background: linear-gradient(135deg,#1A1A1A 0%,#2D1B4E 50%,#1A1A1A 100%); color:#fff; }
+  .gradient {
+    background: linear-gradient(135deg,#A855F7 0%,#3B82F6 25%,#06B6D4 40%,#80DDF6 50%,#10B981 60%,#F59E0B 75%,#EC4899 90%,#A855F7 100%);
+    background-size: 300% 300%; animation: gradientShift 12s ease infinite; color: #fff;
+  }
+
+  /* cards */
+  .grid { display: grid; gap: 22px; }
+  .card { background:#fff; border-radius: 22px; padding: 34px 30px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    transition: all .4s cubic-bezier(0.16,1,0.3,1); text-align: left; }
+  .card:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,0.1); }
+  .card.dark { background: #1c1c1c; }
+  .icon-circle { width: 64px; height: 64px; border-radius: 50%; display:flex; align-items:center; justify-content:center; font-size: 30px; margin-bottom: 18px; }
+
+  /* animations */
+  @keyframes fadeUp { from {opacity:0;transform:translateY(40px);} to {opacity:1;transform:translateY(0);} }
+  @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
+  @keyframes scaleIn { from {opacity:0;transform:scale(0.92);} to {opacity:1;transform:scale(1);} }
+  @keyframes slideInLeft { from {opacity:0;transform:translateX(-60px);} to {opacity:1;transform:translateX(0);} }
+  @keyframes slideInRight { from {opacity:0;transform:translateX(60px);} to {opacity:1;transform:translateX(0);} }
+  @keyframes bounceIn { 0%{opacity:0;transform:scale(0.3);}50%{transform:scale(1.05);}70%{transform:scale(0.95);}100%{opacity:1;transform:scale(1);} }
+  @keyframes revealWord { from {opacity:0;transform:translateY(30px) scale(0.95);filter:blur(8px);} to {opacity:1;transform:translateY(0) scale(1);filter:blur(0);} }
+  @keyframes countUp { from {opacity:0;transform:translateY(20px) scale(0.9);} to {opacity:1;transform:translateY(0) scale(1);} }
+  @keyframes gradientShift { 0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;} }
+
+  .animate-element { opacity: 0; animation-fill-mode: forwards; animation-timing-function: cubic-bezier(0.16,1,0.3,1); }
+  .slide.visible .animate-element { animation-name: fadeUp; animation-duration: 800ms; }
+  .slide.visible .anim-fade { animation-name: fadeIn; }
+  .slide.visible .anim-scale { animation-name: scaleIn; }
+  .slide.visible .anim-left { animation-name: slideInLeft; }
+  .slide.visible .anim-right { animation-name: slideInRight; }
+  .slide.visible .anim-bounce { animation-name: bounceIn; }
+  .slide.visible .anim-reveal { animation-name: revealWord; animation-duration: 1000ms; }
+  .slide.visible .anim-count { animation-name: countUp; animation-duration: 900ms; }
+  .slide.visible .animate-element:nth-child(1){animation-delay:0ms;}
+  .slide.visible .animate-element:nth-child(2){animation-delay:150ms;}
+  .slide.visible .animate-element:nth-child(3){animation-delay:300ms;}
+  .slide.visible .animate-element:nth-child(4){animation-delay:450ms;}
+  .slide.visible .animate-element:nth-child(5){animation-delay:600ms;}
+  .slide.visible .animate-element:nth-child(6){animation-delay:750ms;}
+  .delay-200{animation-delay:200ms!important;} .delay-400{animation-delay:400ms!important;}
+  .delay-600{animation-delay:600ms!important;} .delay-800{animation-delay:800ms!important;}
+  .delay-1000{animation-delay:1000ms!important;}
+
+  .pill { display:inline-block; padding:8px 18px; border-radius:999px; font-size:14px; font-weight:600; letter-spacing:0.04em; }
+</style>
+</head>
+<body>
+<div id="indicator">Title · 1 / 10</div>
+
+<!-- 1 TITLE -->
+<section class="slide gradient" data-title="Funnel Intelligence">
+  <img class="logo" src="https://cdn.prod.website-files.com/61c05cf1fe36bc5723b06446/6889c393a5c6088181452389_P.png" alt="Perspective">
+  <div class="content">
+    <div class="label-text animate-element anim-fade" style="opacity:.85;margin-bottom:28px;">Funnel Intelligence · V0</div>
+    <h1 class="hero-text animate-element anim-reveal">Score a funnel<br>before it gets traffic.</h1>
+    <p class="body-text animate-element delay-600" style="margin-top:30px;font-weight:600;opacity:.9;">We asked if it's possible. The answer is yes.</p>
+  </div>
+  <div class="gradient-bar on-dark"></div>
+</section>
+
+<!-- 2 THE QUESTION -->
+<section class="slide" data-title="The Question">
+  <img class="logo" src="https://cdn.prod.website-files.com/61c05cf1fe36bc5723b06446/6889c393a5c6088181452389_P.png" alt="Perspective">
+  <div class="content">
+    <div class="label-text muted animate-element" style="margin-bottom:30px;">The question</div>
+    <h2 class="section-text animate-element">Can we predict and improve a funnel's conversion from its <span class="gradient-text">design alone</span>, and turn that into a product?</h2>
+    <p class="body-text muted animate-element" style="margin-top:34px;">A score, and recommendations a builder can act on.</p>
+  </div>
+  <div class="gradient-bar"></div>
+</section>
+
+<!-- 3 WHAT WE BUILT -->
+<section class="slide dark" data-title="The Foundation">
+  <img class="logo" src="https://cdn.prod.website-files.com/61c05cf1fe36bc5723b06446/6889c393a5c6088181452389_P.png" alt="Perspective">
+  <div class="content">
+    <div class="label-text animate-element anim-fade" style="color:rgba(255,255,255,.5);margin-bottom:46px;">What we built — the full dataset, in BigQuery</div>
+    <div class="grid animate-element anim-scale" style="grid-template-columns:repeat(4,1fr);gap:30px;">
+      <div><div class="stat-num gradient-text">275M</div><div class="body-text muted-light" style="margin-top:10px;">sessions linked</div></div>
+      <div><div class="stat-num gradient-text">5.7M</div><div class="body-text muted-light" style="margin-top:10px;">funnel snapshots</div></div>
+      <div><div class="stat-num gradient-text">34</div><div class="body-text muted-light" style="margin-top:10px;">niches, from content</div></div>
+      <div><div class="stat-num gradient-text">73%</div><div class="body-text muted-light" style="margin-top:10px;">German recruiting</div></div>
+    </div>
+    <p class="body-text animate-element" style="margin-top:48px;color:rgba(255,255,255,.7);">Verticals read from what each funnel actually says — not a self-reported signup category.</p>
+  </div>
+  <div class="gradient-bar on-dark"></div>
+</section>
+
+<!-- 4 FINDING 1: NICHE DOMINATES -->
+<section class="slide" data-title="Finding 1 · Niche dominates">
+  <img class="logo" src="https://cdn.prod.website-files.com/61c05cf1fe36bc5723b06446/6889c393a5c6088181452389_P.png" alt="Perspective">
+  <div class="content">
+    <div class="label-text muted animate-element" style="margin-bottom:24px;">Finding 1</div>
+    <div class="animate-element anim-count" style="display:flex;align-items:baseline;justify-content:center;gap:8px;">
+      <span class="stat-num"><span style="color:#9CA3AF;">87</span><span class="gradient-text">/13</span></span>
+    </div>
+    <h2 class="slide-title animate-element" style="margin-top:24px;"><b>87%</b> of conversion is the niche, offer & audience. Only <b>~13%</b> is the funnel's design.</h2>
+    <p class="body-text muted animate-element" style="margin-top:30px;">So the score is a percentile <span class="gradient-text">within a niche</span> — never an absolute number.</p>
+  </div>
+  <div class="gradient-bar"></div>
+</section>
+
+<!-- 5 FINDING 2: THE SCORE WORKS -->
+<section class="slide dark-grad" data-title="Finding 2 · The score works">
+  <img class="logo" src="https://cdn.prod.website-files.com/61c05cf1fe36bc5723b06446/6889c393a5c6088181452389_P.png" alt="Perspective">
+  <div class="content">
+    <div class="label-text animate-element anim-fade" style="color:rgba(255,255,255,.5);margin-bottom:20px;">Finding 2 — the Funnel Score is real</div>
+    <div class="stat-num gradient-text animate-element anim-count">ρ = 0.48</div>
+    <h2 class="slide-title animate-element" style="margin-top:22px;color:#fff;">Design predicts within-niche conversion at 0.48 — past the 0.40 gate.</h2>
+    <p class="body-text animate-element" style="margin-top:30px;color:rgba(255,255,255,.75);">And the <span class="gradient-text">copy matters more than the layout</span>. A zero-traffic score is feasible.</p>
+  </div>
+  <div class="gradient-bar on-dark"></div>
+</section>
+
+<!-- 6 FINDING 3: THE PLAYBOOK -->
+<section class="slide" data-title="Finding 3 · The playbook">
+  <img class="logo" src="https://cdn.prod.website-files.com/61c05cf1fe36bc5723b06446/6889c393a5c6088181452389_P.png" alt="Perspective">
+  <div class="content">
+    <div class="label-text muted animate-element" style="margin-bottom:40px;">Finding 3 — what actually wins</div>
+    <div class="grid" style="grid-template-columns:repeat(2,1fr);max-width:920px;margin:0 auto;">
+      <div class="card animate-element anim-left"><div class="icon-circle" style="background:#EDE4FB;">❓</div><div class="slide-title" style="font-size:24px;">Open with a question</div><div class="body-text muted" style="font-size:18px;margin-top:8px;">Not a static hero landing page.</div></div>
+      <div class="card animate-element anim-right"><div class="icon-circle" style="background:#DDEBFE;">🪶</div><div class="slide-title" style="font-size:24px;">Keep page one lean</div><div class="body-text muted" style="font-size:18px;margin-top:8px;">Less media, fewer buttons.</div></div>
+      <div class="card animate-element anim-left"><div class="icon-circle" style="background:#D6F3EA;">⅓</div><div class="slide-title" style="font-size:24px;">Reach the form early</div><div class="body-text muted" style="font-size:18px;margin-top:8px;">By the first third, not the middle.</div></div>
+      <div class="card animate-element anim-right"><div class="icon-circle" style="background:#FCEBD2;">🎯</div><div class="slide-title" style="font-size:24px;">Niche message angles</div><div class="body-text muted" style="font-size:18px;margin-top:8px;">Relocation for trades · live webinars for coaching.</div></div>
+    </div>
+  </div>
+  <div class="gradient-bar"></div>
+</section>
+
+<!-- 7 FINDING 4: THE HARD TRUTH -->
+<section class="slide dark" data-title="Finding 4 · The hard truth">
+  <img class="logo" src="https://cdn.prod.website-files.com/61c05cf1fe36bc5723b06446/6889c393a5c6088181452389_P.png" alt="Perspective">
+  <div class="content">
+    <div class="label-text animate-element anim-fade" style="color:rgba(255,255,255,.5);margin-bottom:30px;">Finding 4 — the one that shapes the product</div>
+    <h2 class="section-text animate-element anim-reveal" style="color:#fff;">Most A/B-tested changes <span style="color:#EF4444;">lose</span>.</h2>
+    <div class="grid animate-element" style="grid-template-columns:repeat(2,1fr);max-width:760px;margin:50px auto 0;gap:40px;">
+      <div><div class="stat-num" style="color:#fff;font-size:clamp(48px,7vw,84px);">41%</div><div class="body-text muted-light" style="margin-top:8px;">of changes beat the original</div></div>
+      <div><div class="stat-num" style="color:#fff;font-size:clamp(48px,7vw,84px);">11%</div><div class="body-text muted-light" style="margin-top:8px;">win rate when you add a form question</div></div>
+    </div>
+    <p class="body-text animate-element" style="margin-top:46px;color:rgba(255,255,255,.75);">Winning funnels <i>have</i> these traits — but <span class="gradient-text">adding them rarely wins</span>. Correlation isn't causation, measured on ~10k real tests.</p>
+  </div>
+  <div class="gradient-bar on-dark"></div>
+</section>
+
+<!-- 8 WHAT IT MEANS -->
+<section class="slide" data-title="What it means">
+  <img class="logo" src="https://cdn.prod.website-files.com/61c05cf1fe36bc5723b06446/6889c393a5c6088181452389_P.png" alt="Perspective">
+  <div class="content-left">
+    <div class="label-text muted animate-element" style="margin-bottom:34px;text-align:center;">What it means for the product</div>
+    <h2 class="slide-title animate-element" style="text-align:center;margin-bottom:14px;">Ship the score now. Earn the recommendations.</h2>
+    <div class="grid animate-element" style="grid-template-columns:repeat(3,1fr);margin-top:40px;">
+      <div class="card anim-left"><div class="label-text gradient-text" style="margin-bottom:10px;">Safe today</div><div class="body-text">Descriptive score + niche benchmarks. Works at zero traffic.</div></div>
+      <div class="card anim-scale"><div class="label-text gradient-text" style="margin-bottom:10px;">Gate advice</div><div class="body-text">Only recommend changes the A/B history proves out.</div></div>
+      <div class="card anim-right"><div class="label-text gradient-text" style="margin-bottom:10px;">Flywheel = core</div><div class="body-text">It's what makes advice safe. 35k historical tests already seed it — no cold start.</div></div>
+    </div>
+  </div>
+  <div class="gradient-bar"></div>
+</section>
+
+<!-- 9 THE PLAN -->
+<section class="slide dark-grad" data-title="The Plan">
+  <img class="logo" src="https://cdn.prod.website-files.com/61c05cf1fe36bc5723b06446/6889c393a5c6088181452389_P.png" alt="Perspective">
+  <div class="content">
+    <div class="label-text animate-element anim-fade" style="color:rgba(255,255,255,.5);margin-bottom:40px;">The plan</div>
+    <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:24px;">
+      <div class="card dark animate-element anim-left"><div class="slide-title gradient-text" style="font-size:26px;">Now</div><div class="body-text" style="color:rgba(255,255,255,.8);font-size:18px;margin-top:14px;">Finish the causal table. Ship Funnel Score v1. Build recommendations from proven levers. <b>All in BigQuery, zero prod risk.</b></div></div>
+      <div class="card dark animate-element anim-scale"><div class="slide-title gradient-text" style="font-size:26px;">Next</div><div class="body-text" style="color:rgba(255,255,255,.8);font-size:18px;margin-top:14px;">Drop-off diagnostics via a proper activities→BigQuery pipeline. Flywheel in production.</div></div>
+      <div class="card dark animate-element anim-right"><div class="slide-title gradient-text" style="font-size:26px;">Later</div><div class="body-text" style="color:rgba(255,255,255,.8);font-size:18px;margin-top:14px;">RAG playbooks. Personalization. Autonomous optimization.</div></div>
+    </div>
+  </div>
+  <div class="gradient-bar on-dark"></div>
+</section>
+
+<!-- 10 OPEN QUESTIONS / CTA -->
+<section class="slide gradient" data-title="For Marco">
+  <img class="logo" src="https://cdn.prod.website-files.com/61c05cf1fe36bc5723b06446/6889c393a5c6088181452389_P.png" alt="Perspective">
+  <div class="content">
+    <div class="label-text animate-element anim-fade" style="opacity:.85;margin-bottom:30px;">Three decisions for you</div>
+    <h2 class="section-text animate-element anim-reveal">Where does v1 live, who builds the pipeline, how do we lock down prod?</h2>
+    <p class="body-text animate-element delay-600" style="margin-top:34px;font-weight:600;opacity:.9;">In-editor widget vs dashboard · activities→BigQuery owner · per-person DB users + analytics node.</p>
+  </div>
+  <div class="gradient-bar on-dark"></div>
+</section>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const indicator = document.getElementById('indicator');
+  const total = slides.length;
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting && e.intersectionRatio >= 0.3) {
+        e.target.classList.add('visible');
+        const idx = [...slides].indexOf(e.target) + 1;
+        indicator.textContent = `${e.target.dataset.title} · ${idx} / ${total}`;
+        const dark = e.target.classList.contains('dark') || e.target.classList.contains('dark-grad') || e.target.classList.contains('gradient');
+        indicator.classList.toggle('light', dark);
+      }
+    });
+  }, { threshold: [0.3, 0.6] });
+  slides.forEach(s => io.observe(s));
+  // keyboard nav
+  let cur = 0;
+  function go(i){ cur = Math.max(0, Math.min(total-1, i)); slides[cur].scrollIntoView({behavior:'smooth'}); }
+  window.addEventListener('keydown', (ev) => {
+    if (['ArrowDown','ArrowRight',' ','PageDown'].includes(ev.key)) { ev.preventDefault(); go(cur+1); }
+    if (['ArrowUp','ArrowLeft','PageUp'].includes(ev.key)) { ev.preventDefault(); go(cur-1); }
+  });
+  // track current slide on scroll for keyboard
+  const io2 = new IntersectionObserver((entries)=>{entries.forEach(e=>{if(e.isIntersecting&&e.intersectionRatio>=0.6){cur=[...slides].indexOf(e.target);}});},{threshold:[0.6]});
+  slides.forEach(s => io2.observe(s));
+  slides[0].classList.add('visible');
+</script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Funnel Intelligence — Analyze a Funnel</title>
+<style>
+ *{margin:0;padding:0;box-sizing:border-box}
+ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+   -webkit-font-smoothing:antialiased;background:#F5F5F5;color:#1A1A1A;padding:32px;max-width:920px;margin:0 auto}
+ .grad{background:linear-gradient(90deg,#A855F7,#3B82F6,#06B6D4,#10B981,#F59E0B,#EF4444,#EC4899);
+   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+ .bar{height:5px;border-radius:3px;background:linear-gradient(90deg,#A855F7,#3B82F6,#06B6D4,#10B981,#F59E0B,#EF4444,#EC4899)}
+ h1{font-size:30px;font-weight:800;letter-spacing:-.02em} .sub{color:#6B7280;margin:6px 0 22px;font-size:15px}
+ .card{background:#fff;border-radius:18px;padding:22px 24px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:18px}
+ input,textarea{font:inherit;font-size:15px;padding:12px 14px;border-radius:12px;border:1px solid #ddd;width:100%;background:#fff}
+ textarea{min-height:120px;resize:vertical;margin-bottom:10px} .urlrow{display:flex;gap:10px;margin-bottom:10px}
+ button{font:inherit;font-weight:700;font-size:15px;color:#fff;background:#1A1A1A;border:0;border-radius:12px;padding:12px 22px;cursor:pointer}
+ button:disabled{opacity:.5;cursor:default} .hint{font-size:12.5px;color:#9CA3AF;margin-top:6px}
+ .row{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+ .niche{display:inline-block;background:#EDE4FB;color:#7C3AED;padding:5px 12px;border-radius:999px;font-size:13px;font-weight:600}
+ .conf{display:inline-block;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600;margin-left:8px}
+ .conf.ok{background:#DCFCE7;color:#15803D} .conf.low{background:#FEF3C7;color:#92400E}
+ .score{font-size:60px;font-weight:900;letter-spacing:-.03em;line-height:1}
+ .meterlabel{font-size:11px;color:#9CA3AF;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+ .rec{border-left:3px solid #10B981;padding:12px 15px;background:#FAFAFA;border-radius:10px;margin-bottom:10px}
+ .rec.t{border-left-color:#F59E0B}
+ .rec h3{font-size:15px;font-weight:700;margin-bottom:4px;display:inline}
+ .badge{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:6px;margin-right:6px}
+ .badge.u{background:#DBEAFE;color:#1D4ED8} .badge.n{background:#F3E8FF;color:#7E22CE} .badge.c{background:#FEF3C7;color:#92400E}
+ .vs{font-size:12.5px;color:#9CA3AF;margin-top:3px}
+ .ex{font-size:13px;color:#374151;background:#F8FAFF;border:1px solid #DBEAFE;border-radius:8px;padding:8px 11px;margin-bottom:6px}
+ .note{font-size:12.5px;color:#3730A3;background:#EEF2FF;border-radius:8px;padding:9px 12px;margin-top:8px}
+ .err{color:#B91C1C;background:#FEE2E2;border-radius:8px;padding:10px 13px}
+ .legend{font-size:12px;color:#9CA3AF;margin-top:10px} .spin{color:#9CA3AF;font-size:14px}
+ .ex-chip{color:#3B82F6;text-decoration:none;font-weight:600} .ex-chip:hover{text-decoration:underline}
+ .tldr{margin-top:26px} .tldr summary{cursor:pointer;font-weight:700;font-size:15px}
+ .tldr h4{font-size:13px;margin:14px 0 4px;color:#1A1A1A} .tldr p,.tldr li{font-size:13px;color:#4B5563;line-height:1.55}
+ .tldr ol{margin:4px 0 0 18px} .tldr .k{color:#111;font-weight:600}
+</style></head><body>
+<div class="bar" style="width:60px;margin-bottom:18px"></div>
+<h1>Funnel <span class="grad">Intelligence</span> — analyze a funnel</h1>
+<div class="sub">Paste a Perspective <b>campaign&nbsp;ID</b> (or version ID). The engine classifies its niche, scores it against that niche, and returns recommendations — what the best-converting funnels like it do differently.</div>
+<div class="card">
+  <div class="urlrow">
+    <input id="fid" placeholder="Paste a campaign ID  (e.g. 699eeda3a101743f39b5656f)">
+    <button id="go">Analyze</button>
+  </div>
+  <div class="hint">Examples to try:
+    <a href="#" class="ex-chip" data-id="67eba4d7ed55f7003b965e33">Physios Service</a> ·
+    <a href="#" class="ex-chip" data-id="64ed9ccece8466001483cb07">OC Lead Funnel</a> ·
+    <a href="#" class="ex-chip" data-id="66d979ee4500810014354b82">BALIMO</a>
+    &nbsp;|&nbsp; covers ~56.5k campaigns from our snapshot.
+  </div>
+  <details style="margin-top:12px"><summary style="cursor:pointer;font-size:13px;color:#6B7280">…or paste raw funnel text instead (no score, niche + playbook only)</summary>
+    <textarea id="text" placeholder="Paste the funnel's copy — headline, questions, offer… (any language)" style="margin-top:10px"></textarea>
+    <input id="name" placeholder="Funnel name (optional)">
+  </details>
+</div>
+<div id="out"></div>
+
+<details class="tldr card">
+  <summary>How this works <span style="color:#9CA3AF;font-weight:400">— 2-min methodology</span></summary>
+  <p>We analysed <span class="k">~196,000 real Perspective funnels</span> (and ~10,000 historical A/B tests) to build three things:</p>
+  <h4>1 · Niche</h4>
+  <p>We embed every funnel's copy with a multilingual model and group them into 32 niches by meaning. A classifier assigns a new funnel to its niche from its text — <span class="k">92% agreement on funnels from accounts it never saw</span>, and it asks you to confirm when it's unsure.</p>
+  <h4>2 · Score (/100)</h4>
+  <p>A model predicts a funnel's conversion <span class="k">percentile within its niche</span> from its design + copy. Validated honestly: <span class="k">ρ=0.40 on unseen accounts</span> (it generalises, not memorises) and <span class="k">ρ=0.48 predicting newer funnels from older ones</span> (it predicts the future, not just fits the past).</p>
+  <h4>3 · Recommendations</h4>
+  <p>For each niche we measured what the best-converting funnels do differently. Suggestions are split into <span class="k">universal</span> moves (true across niches), <span class="k">niche-specific</span> ones, and a <span class="k">“test, don't apply”</span> bucket — because some patterns (e.g. more form questions) correlate with winning but <em>cause</em> losses in real A/B tests.</p>
+  <h4>The honest caveats</h4>
+  <ol>
+    <li>Funnel <span class="k">design explains ~13%</span> of conversion — audience, offer and traffic dominate the rest. The score is a relative design-quality signal, not a CVR oracle.</li>
+    <li>It's <span class="k">correlational</span>: recommendations are <span class="k">experiments to A/B-test</span>, not guaranteed fixes. The A/B flywheel turns the strong ones into confident, causal advice over time.</li>
+    <li><span class="k">Copy is the biggest lever</span> (bigger than layout) — so the highest-value tests are usually messaging, which is why we also generate tailored opener suggestions.</li>
+  </ol>
+  <p style="margin-top:10px;color:#9CA3AF">All on-device, no customer data leaves the dataset. Built by Alex + Claude.</p>
+</details>
+<script>
+const $=id=>document.getElementById(id);
+function scoreColor(s){return s>=66?'#10B981':s>=33?'#F59E0B':'#EF4444';}
+function recHtml(r){return `<div class="rec"><span class="badge ${r.universal?'u':'n'}">${r.universal?'universal':'niche-specific'}</span><h3>${r.text}</h3><div class="vs">within-niche correlation ${r.corr>=0?'+':''}${r.corr}</div>${r.suggestion?suggHtml(r.suggestion):''}</div>`;}
+function suggHtml(s){return `<div class="ex" style="margin-top:8px"><b>✎ Try something like</b>${s.current?` — replaces: <i>${s.current}</i>`:''}<br>${s.try.map(t=>'• '+t).join('<br>')}</div>`;}
+function render(d){
+  if(d.error){$('out').innerHTML=`<div class="card"><div class="err">${d.error}</div></div>`;return;}
+  const confCls=d.ask_user?'low':'ok';
+  const confTxt=d.ask_user?`niche ${d.conf}% — confirm? ${(d.alt||[]).map(a=>a.niche+' '+a.conf+'%').join(' / ')}`:`niche match ${d.conf}%`;
+  const scoreBlock = d.mode==='full' ? `<div style="text-align:right"><div class="meterlabel">within-niche score</div>
+     <div class="score" style="color:${scoreColor(d.score)}">${d.score}<span style="font-size:20px;color:#9CA3AF">/100</span></div>
+     <div class="vs">${d.cvr}% vs niche median ${d.niche_median_cvr}%</div></div>`
+   : `<div style="text-align:right"><div class="meterlabel">niche median CVR</div><div class="score" style="font-size:38px;color:#6B7280">${d.niche_median_cvr}%</div></div>`;
+  const ex = (d.exemplars&&d.exemplars.length)?`<div class="meterlabel" style="margin:16px 0 8px">How top funnels in this niche open</div>${d.exemplars.map(e=>`<div class="ex">${e}…</div>`).join('')}`:'';
+  $('out').innerHTML=`
+   <div class="card"><div class="row">
+     <div><span class="niche">${d.niche}</span><span class="conf ${confCls}">${confTxt}</span>
+       <div class="vs" style="margin-top:8px">${d.input_name||''}</div></div>
+     ${scoreBlock}
+   </div></div>
+   <div class="card">
+     <div class="meterlabel" style="margin-bottom:12px">${d.mode==='full'?'Recommended experiments for this funnel':'Playbook — what funnels like yours that convert well tend to do'}</div>
+     ${(d.exp||[]).map(recHtml).join('')||'<div class="vs">No strong structural gaps for this niche.</div>'}
+     ${(d.test&&d.test.length)?'<div class="meterlabel" style="margin:16px 0 10px">Test, don\'t apply</div>'+d.test.map(r=>`<div class="rec t"><span class="badge c">test, don't apply</span><h3>${r.text}</h3><div class="vs">strong correlation (${r.corr>=0?'+':''}${r.corr}) but adding form friction loses most A/B tests → run it as a test</div></div>`).join(''):''}
+     ${ex}
+     ${d.note?`<div class="note">${d.note}</div>`:''}
+     <div class="legend">Correlational starting points, framed as experiments. The A/B flywheel turns the strong ones into confident, causal advice over time.</div>
+   </div>`;
+}
+async function run(){
+  const body={funnel_id:$('fid').value,text:$('text').value,name:$('name').value};
+  $('out').innerHTML='<div class="card"><div class="spin">Analyzing…</div></div>';
+  $('go').disabled=true;
+  try{const r=await fetch('/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});render(await r.json());}
+  catch(e){$('out').innerHTML=`<div class="card"><div class="err">${e}</div></div>`;}
+  $('go').disabled=false;
+}
+$('go').addEventListener('click',run);
+$('fid').addEventListener('keydown',e=>{if(e.key==='Enter')run();});
+document.querySelectorAll('.ex-chip').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();$('fid').value=a.dataset.id;run();}));
+</script></body></html>
