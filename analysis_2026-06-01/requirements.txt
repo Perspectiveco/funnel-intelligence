@@ -1,0 +1,9 @@
+# Funnel Intelligence analyzer — Python deps. Python 3.10+ (3.11 or 3.12 recommended).
+# scikit-learn is pinned because the saved model/classifier were created with this version.
+numpy==2.4.6
+pandas==3.0.3
+scikit-learn==1.8.0
+scipy==1.17.1
+joblib==1.5.3
+sentence-transformers==5.5.1
+# torch + transformers install automatically as dependencies of sentence-transformers.
